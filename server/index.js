@@ -5,13 +5,13 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Routes
 import hospitalRoutes from './routes/hospitalRoutes.js';
 
-// Config
+// Load environment variables
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
@@ -33,6 +33,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
 app.use('/api/v1/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -46,17 +47,20 @@ app.use('/api/v1/upload', upload.single('image'), (req, res) => {
 // Routes
 app.use('/api/v1/hospitals', hospitalRoutes);
 
-// Database connection with MongoDB Memory Server
+// Connect to MongoDB Atlas
 const startServer = async () => {
   try {
-    // Create an in-memory MongoDB instance
-    const mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    
-    await mongoose.connect(mongoUri);
-    console.log('Connected to in-memory MongoDB');
-    
-    // Start server
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not set in environment variables');
+    }
+
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log('Connected to MongoDB Atlas');
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
