@@ -10,6 +10,7 @@ import { Input } from "../components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Skeleton } from "../components/ui/skeleton"
+import { API_URL } from "../services/api"
 
 interface Hospital {
   _id: string
@@ -37,7 +38,7 @@ export default function HospitalListPage() {
   const fetchHospitals = async () => {
     try {
       setLoading(true)
-      const response = await axios.get("http://localhost:5000/api/v1/hospitals")
+      const response = await axios.get(`${API_URL}/hospitals`)
       setHospitals(response.data.data)
       setFilteredHospitals(response.data.data)
     } catch (error) {
@@ -53,7 +54,7 @@ export default function HospitalListPage() {
 
     try {
       setIsSearching(true)
-      const response = await axios.get(`http://localhost:5000/api/v1/hospitals?city=${searchCity}`)
+      const response = await axios.get(`${API_URL}/hospitals?city=${searchCity}`)
       setFilteredHospitals(response.data.data)
       if (response.data.data.length === 0) {
         toast.error("No hospitals found in this city")
@@ -207,7 +208,7 @@ export default function HospitalListPage() {
             <Card key={hospital._id} className="overflow-hidden transition-all hover:shadow-lg group">
               <div className="relative aspect-video">
                 <img
-                  src={hospital.image.startsWith("http") ? hospital.image : `http://localhost:5000${hospital.image}`}
+                  src={hospital.image.startsWith("http") ? hospital.image : `https://hospital-management-system-kkvl.onrender.com/${hospital.image}`}
                   alt={hospital.name}
                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   onError={(e) => {

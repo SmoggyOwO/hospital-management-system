@@ -6,6 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { API_URL } from '../services/api';
 
 interface FormData {
   name: string;
@@ -66,7 +67,7 @@ const CreateHospitalPage: React.FC = () => {
       const formData = new FormData();
       formData.append('image', imageFile);
       
-      const imageUploadResponse = await axios.post('http://localhost:5000/api/v1/upload', formData, {
+      const imageUploadResponse = await axios.post(`${API_URL}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -79,7 +80,7 @@ const CreateHospitalPage: React.FC = () => {
         image: imageUploadResponse.data.filePath
       };
       
-      const response = await axios.post('http://localhost:5000/api/v1/hospitals/create', hospitalData);
+      const response = await axios.post(`${API_URL}/hospitals/create`, hospitalData);
       
       toast.success('Hospital created successfully');
       navigate(`/hospitals/${response.data.data._id}`);

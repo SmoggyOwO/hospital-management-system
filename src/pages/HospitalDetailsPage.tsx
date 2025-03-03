@@ -4,6 +4,7 @@ import { MapPin, Star, Stethoscope, Building2, Edit, Trash2, AlertTriangle } fro
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
+import { API_URL } from '../services/api';
 
 interface Hospital {
   _id: string;
@@ -34,7 +35,7 @@ const HospitalDetailsPage: React.FC = () => {
   const fetchHospitalDetails = async (hospitalId: string) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/v1/hospitals/details?id=${hospitalId}`);
+      const response = await axios.get(`${API_URL}/hospitals/details?id=${hospitalId}`);
       setHospital(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -46,7 +47,7 @@ const HospitalDetailsPage: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/v1/hospitals/delete?id=${id}`);
+      await axios.delete(`${API_URL}/hospitals/delete?id=${id}`);
       toast.success('Hospital deleted successfully');
       navigate('/hospitals');
     } catch (error) {
@@ -125,7 +126,7 @@ const HospitalDetailsPage: React.FC = () => {
         <div className="md:col-span-2">
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
             <img 
-              src={hospital.image.startsWith('http') ? hospital.image : `http://localhost:5000${hospital.image}`} 
+              src={hospital.image.startsWith('http') ? hospital.image : `https://hospital-management-system-kkvl.onrender.com/${hospital.image}`} 
               alt={hospital.name}
               className="w-full h-80 object-cover"
               onError={(e) => {
@@ -161,7 +162,7 @@ const HospitalDetailsPage: React.FC = () => {
                     {hospital.images.map((img, index) => (
                       <img 
                         key={index} 
-                        src={img.startsWith('http') ? img : `http://localhost:5000${img}`} 
+                        src={img.startsWith('http') ? img : `https://hospital-management-system-kkvl.onrender.com/${img}`} 
                         alt={`${hospital.name} - ${index + 1}`}
                         className="rounded-md h-32 w-full object-cover"
                         onError={(e) => {

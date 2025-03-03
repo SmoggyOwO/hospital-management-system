@@ -6,6 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
+import { API_URL } from '../services/api';
 
 interface FormData {
   name: string;
@@ -58,7 +59,7 @@ const EditHospitalPage: React.FC = () => {
   const fetchHospitalDetails = async (hospitalId: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/v1/hospitals/details?id=${hospitalId}`);
+      const response = await axios.get(`${API_URL}/hospitals/details?id=${hospitalId}`);
       const hospitalData = response.data.data;
       
       setHospital(hospitalData);
@@ -115,7 +116,7 @@ const EditHospitalPage: React.FC = () => {
         const formData = new FormData();
         formData.append('image', imageFile);
         
-        const imageUploadResponse = await axios.post('http://localhost:5000/api/v1/upload', formData, {
+        const imageUploadResponse = await axios.post(`${API_URL}/upload`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -131,7 +132,7 @@ const EditHospitalPage: React.FC = () => {
         image: imagePath
       };
       
-      await axios.put(`http://localhost:5000/api/v1/hospitals/update?id=${id}`, hospitalData);
+      await axios.put(`${API_URL}/hospitals/update?id=${id}`, hospitalData);
       
       toast.success('Hospital updated successfully');
       navigate(`/hospitals/${id}`);
@@ -262,7 +263,7 @@ const EditHospitalPage: React.FC = () => {
                   ) : currentImage ? (
                     <div className="w-full text-center">
                       <img 
-                        src={currentImage.startsWith('http') ? currentImage : `http://localhost:5000${currentImage}`} 
+                        src={currentImage.startsWith('http') ? currentImage : `https://hospital-management-system-kkvl.onrender.com/${currentImage}`} 
                         alt="Current" 
                         className="mx-auto h-32 object-cover mb-2"
                         onError={(e) => {
