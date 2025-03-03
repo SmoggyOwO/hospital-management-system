@@ -21,13 +21,6 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// Serve React frontend
-app.use(express.static(path.join(__dirname, '../client/build')));
-
-// Handle React frontend routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-});
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -53,6 +46,14 @@ app.use('/api/v1/upload', upload.single('image'), (req, res) => {
 
 // Routes
 app.use('/api/v1/hospitals', hospitalRoutes);
+
+// Serve React frontend
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// // Handle React frontend routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+});
 
 // Connect to MongoDB Atlas
 const startServer = async () => {
