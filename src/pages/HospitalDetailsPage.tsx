@@ -5,7 +5,6 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
 import { API_URL } from '../services/api';
-
 interface Hospital {
   _id: string;
   name: string;
@@ -17,21 +16,19 @@ interface Hospital {
   images: string[];
   numberOfDoctors: number;
   numberOfDepartments: number;
+  imageUrl: string;
 }
-
 const HospitalDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [hospital, setHospital] = useState<Hospital | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-
   useEffect(() => {
     if (id) {
       fetchHospitalDetails(id);
     }
   }, [id]);
-
   const fetchHospitalDetails = async (hospitalId: string) => {
     try {
       setLoading(true);
@@ -44,7 +41,6 @@ const HospitalDetailsPage: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleDelete = async () => {
     try {
       await axios.delete(`${API_URL}/hospitals/delete?id=${id}`);
@@ -56,7 +52,6 @@ const HospitalDetailsPage: React.FC = () => {
     }
     setShowDeleteModal(false);
   };
-
   // Render star rating
   const renderRating = (rating: number) => {
     return Array(5).fill(0).map((_, index) => (
@@ -66,7 +61,6 @@ const HospitalDetailsPage: React.FC = () => {
       />
     ));
   };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -74,7 +68,6 @@ const HospitalDetailsPage: React.FC = () => {
       </div>
     );
   }
-
   if (!hospital) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -90,7 +83,6 @@ const HospitalDetailsPage: React.FC = () => {
       </div>
     );
   }
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -119,14 +111,13 @@ const HospitalDetailsPage: React.FC = () => {
           </Button>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="grid md:grid-cols-3 gap-8">
         {/* Left Column - Main Image and Info */}
         <div className="md:col-span-2">
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
             <img 
-              src={hospital.image.startsWith('http') ? hospital.image : `https://hospital-management-system-kkvl.onrender.com/${hospital.image}`} 
+              src={hospital.imageUrl} 
               alt={hospital.name}
               className="w-full h-80 object-cover"
               onError={(e) => {
@@ -162,7 +153,7 @@ const HospitalDetailsPage: React.FC = () => {
                     {hospital.images.map((img, index) => (
                       <img 
                         key={index} 
-                        src={img.startsWith('http') ? img : `https://hospital-management-system-kkvl.onrender.com/${img}`} 
+                        src={img} 
                         alt={`${hospital.name} - ${index + 1}`}
                         className="rounded-md h-32 w-full object-cover"
                         onError={(e) => {
@@ -211,7 +202,6 @@ const HospitalDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -243,5 +233,4 @@ const HospitalDetailsPage: React.FC = () => {
     </div>
   );
 };
-
 export default HospitalDetailsPage;

@@ -21,6 +21,7 @@ interface Hospital {
   rating: number
   numberOfDoctors: number
   numberOfDepartments: number
+  imageUrl: string
 }
 
 export default function HospitalListPage() {
@@ -208,7 +209,7 @@ export default function HospitalListPage() {
             <Card key={hospital._id} className="overflow-hidden transition-all hover:shadow-lg group">
               <div className="relative aspect-video">
                 <img
-                  src={hospital.image.startsWith("http") ? hospital.image : `https://hospital-management-system-kkvl.onrender.com/${hospital.image}`}
+                  src={hospital.imageUrl}
                   alt={hospital.name}
                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   onError={(e) => {
@@ -268,4 +269,3 @@ export default function HospitalListPage() {
     </div>
   )
 }
-

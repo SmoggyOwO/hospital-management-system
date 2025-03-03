@@ -50,7 +50,11 @@ const hospitalSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  imageUrl: {
+    type: String,
+    required: [true, 'Hospital image is required']
+  },
 }, {
   timestamps: true
 });

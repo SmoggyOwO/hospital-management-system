@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { PlusCircle, X, Upload, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { PlusCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,7 @@ interface FormData {
   description: string;
   numberOfDoctors: number;
   numberOfDepartments: number;
+  imageUrl: string;
 }
 
 const specialityOptions = [
@@ -26,19 +27,14 @@ const specialityOptions = [
 
 const CreateHospitalPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
   
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImageUrl(e.target.value);
   };
 
   const toggleSpeciality = (speciality: string) => {
@@ -50,8 +46,8 @@ const CreateHospitalPage: React.FC = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!imageFile) {
-      toast.error('Please upload a hospital image');
+    if (!imageUrl) {
+      toast.error('Please provide a hospital image URL');
       return;
     }
 
@@ -63,21 +59,11 @@ const CreateHospitalPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Upload image first
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      
-      const imageUploadResponse = await axios.post(`${API_URL}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      // Create hospital with image path
+      // Create hospital with image URL
       const hospitalData = {
         ...data,
         speciality: selectedSpecialities,
-        image: imageUploadResponse.data.filePath
+        image: imageUrl
       };
       
       const response = await axios.post(`${API_URL}/hospitals/create`, hospitalData);
@@ -162,55 +148,40 @@ const CreateHospitalPage: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hospital Image*
+                <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                  Hospital Image URL*
                 </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  {imagePreview ? (
-                    <div className="w-full text-center">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="mx-auto h-32 object-cover mb-2" 
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview('');
-                        }}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="image-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-blue-500"
-                        >
-                          <span>Upload an image</span>
-                          <Input
-                            className='sr-only'
-                            id="image-upload"
-                            name="image-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  placeholder="Enter image URL"
+                  value={imageUrl}
+                  {...register('imageUrl', { 
+                    required: 'Image URL is required',
+                    onChange: handleImageUrlChange
+                  })}
+                />
+                {errors.imageUrl && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.imageUrl.message}
+                  </p>
+                )}
+                
+                {imageUrl && (
+                  <div className="mt-3 border rounded-md p-2">
+                    <p className="text-sm text-gray-500 mb-2">Preview:</p>
+                    <img
+                      src={imageUrl}
+                      alt="Hospital preview"
+                      className="h-32 object-cover rounded-md"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Invalid+Image+URL';
+                        toast.error('Image URL is invalid or inaccessible');
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             
@@ -253,8 +224,8 @@ const CreateHospitalPage: React.FC = () => {
                           type="button"
                           className='p-0.5'
                           onClick={() => toggleSpeciality(speciality)}
-                          >
-                          <X className="h-3 w-3" />
+                        >
+                          <AlertCircle className="h-3 w-3" />
                         </button>
                       </span>
                     ))}
@@ -338,7 +309,7 @@ const CreateHospitalPage: React.FC = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-             >
+            >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>

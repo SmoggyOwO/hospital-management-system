@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Save, X, Upload, AlertCircle, Loader } from 'lucide-react';
+import { Save, AlertCircle, Loader } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Input } from '../components/ui/input';
@@ -16,6 +16,7 @@ interface FormData {
   description: string;
   numberOfDoctors: number;
   numberOfDepartments: number;
+  imageUrl: string;
 }
 
 interface Hospital {
@@ -44,9 +45,7 @@ const EditHospitalPage: React.FC = () => {
   
   const [hospital, setHospital] = useState<Hospital | null>(null);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [currentImage, setCurrentImage] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -64,7 +63,7 @@ const EditHospitalPage: React.FC = () => {
       
       setHospital(hospitalData);
       setSelectedSpecialities(hospitalData.speciality);
-      setCurrentImage(hospitalData.image);
+      setImageUrl(hospitalData.image);
       
       reset({
         name: hospitalData.name,
@@ -72,7 +71,8 @@ const EditHospitalPage: React.FC = () => {
         rating: hospitalData.rating,
         description: hospitalData.description,
         numberOfDoctors: hospitalData.numberOfDoctors,
-        numberOfDepartments: hospitalData.numberOfDepartments
+        numberOfDepartments: hospitalData.numberOfDepartments,
+        imageUrl: hospitalData.image
       });
       
       setIsLoading(false);
@@ -84,12 +84,8 @@ const EditHospitalPage: React.FC = () => {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImageUrl(e.target.value);
   };
 
   const toggleSpeciality = (speciality: string) => {
@@ -101,6 +97,11 @@ const EditHospitalPage: React.FC = () => {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!imageUrl) {
+      toast.error('Please provide a hospital image URL');
+      return;
+    }
+
     if (selectedSpecialities.length === 0) {
       toast.error('Please select at least one speciality');
       return;
@@ -109,27 +110,11 @@ const EditHospitalPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      let imagePath = currentImage;
-      
-      // Upload new image if selected
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        
-        const imageUploadResponse = await axios.post(`${API_URL}/upload`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        imagePath = imageUploadResponse.data.filePath;
-      }
-      
-      // Update hospital data
+      // Update hospital data with image URL
       const hospitalData = {
         ...data,
         speciality: selectedSpecialities,
-        image: imagePath
+        image: imageUrl
       };
       
       await axios.put(`${API_URL}/hospitals/update?id=${id}`, hospitalData);
@@ -237,82 +222,40 @@ const EditHospitalPage: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hospital Image
+                <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                  Hospital Image URL*
                 </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  {imagePreview ? (
-                    <div className="w-full text-center">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="mx-auto h-32 object-cover mb-2" 
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview('');
-                        }}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
-                  ) : currentImage ? (
-                    <div className="w-full text-center">
-                      <img 
-                        src={currentImage.startsWith('http') ? currentImage : `https://hospital-management-system-kkvl.onrender.com/${currentImage}`} 
-                        alt="Current" 
-                        className="mx-auto h-32 object-cover mb-2"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80";
-                        }}
-                      />
-                      <p className="text-sm text-gray-500 mb-2">Current image</p>
-                      <label
-                        htmlFor="image-upload"
-                        className="cursor-pointer inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        <Upload className="h-4 w-4 mr-1" />
-                        Change Image
-                        <Input
-                        className='sr-only'
-                          id="image-upload"
-                          name="image-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="image-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500"
-                        >
-                          <span>Upload an image</span>
-                          <Input
-                            id="image-upload"
-                            name="image-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <Input
+                  id="imageUrl"
+                  type="url"
+                  placeholder="Enter image URL"
+                  value={imageUrl}
+                  {...register('imageUrl', { 
+                    required: 'Image URL is required',
+                    onChange: handleImageUrlChange
+                  })}
+                />
+                {errors.imageUrl && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.imageUrl.message}
+                  </p>
+                )}
+                
+                {imageUrl && (
+                  <div className="mt-3 border rounded-md p-2">
+                    <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
+                    <img
+                      src={imageUrl}
+                      alt="Hospital preview"
+                      className="h-32 object-cover rounded-md"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Invalid+Image+URL';
+                        toast.error('Image URL is invalid or inaccessible');
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             
@@ -332,7 +275,7 @@ const EditHospitalPage: React.FC = () => {
                           checked={selectedSpecialities.includes(speciality)}
                           onChange={() => toggleSpeciality(speciality)}
                           className='accent-black'
-                          />
+                        />
                         <label
                           htmlFor={`speciality-${speciality}`}
                           className="ml-2 block text-sm text-gray-700"
@@ -356,7 +299,7 @@ const EditHospitalPage: React.FC = () => {
                           className='p-1'
                           onClick={() => toggleSpeciality(speciality)}
                         >
-                          <X className="h-3 w-3" />
+                          <AlertCircle className="h-3 w-3" />
                         </button>
                       </span>
                     ))}
@@ -440,7 +383,7 @@ const EditHospitalPage: React.FC = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              >
+            >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
